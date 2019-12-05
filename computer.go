@@ -1,3 +1,7 @@
+/*
+ * Ship's computer
+ */
+
 package main
 
 import (
