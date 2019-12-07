@@ -9,11 +9,9 @@ import (
 )
 
 func main() {
-
-	fmt.Printf("Problem 01-A answer: %v\n", problem01A("day01.txt"))
-	fmt.Printf("Problem 01-B answer: %v\n", problem01B("day01.txt"))
-
-	fmt.Printf("Problem 02-A answer: %v\n", problem02A("day02.txt"))
-	fmt.Printf("Problem 02-B answer: %v\n", problem02B("day02.txt"))
-
+	fmt.Printf("Problem 01-A answer: %v\n", problem01A("./data/day01.txt"))
+	fmt.Printf("Problem 01-B answer: %v\n", problem01B("./data/day01.txt"))
+	fmt.Printf("Problem 02-A answer: %v\n", problem02A("./data/day02.txt"))
+	fmt.Printf("Problem 02-B answer: %v\n", problem02B("./data/day02.txt"))
+	fmt.Printf("Problem 03-A answer: %v\n", problem03A("./data/day03.txt"))
 }
