@@ -119,8 +119,11 @@ func getWireRoutes(fileName string) ([][]route, error) {
 	return wireRoutes, nil
 }
 
+// traceWires returns a slice containings map of all the points for each wire.  Each wire
+// is one element of the slice and the slice element is a map composed of the points as keys
+// and the value being the length of the path to get to that point
 func traceWires(wireRoutes [][]route) []map[point]int {
-	history := []map[point]int{}
+	wires := []map[point]int{}
 	for _, wireRoute := range wireRoutes {
 		location := point{}
 		totalSteps := 0
@@ -143,11 +146,13 @@ func traceWires(wireRoutes [][]route) []map[point]int {
 				stepsToLocation[location] = totalSteps
 			}
 		}
-		history = append(history, stepsToLocation)
+		wires = append(wires, stepsToLocation)
 	}
-	return history
+	return wires
 }
 
+// getIntersection utilizes the two maps of the points traced by each wire and returns
+// the set of points that both maps have in common
 func getIntersections(wires []map[point]int) []point {
 	intersections := []point{}
 	for key := range wires[0] {
@@ -166,9 +171,7 @@ func problem03A(fileName string) int {
 		log.Fatal(err)
 	}
 
-	history := traceWires(wireRoutes)
-
-	intersections := getIntersections(history)
+	intersections := getIntersections(traceWires(wireRoutes))
 
 	manhattanDistance := math.MaxInt64
 	for _, val := range intersections {

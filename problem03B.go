@@ -58,14 +58,14 @@ func problem03B(fileName string) int {
 		log.Fatal(err)
 	}
 
-	history := traceWires(wireRoutes)
+	wires := traceWires(wireRoutes)
 
-	intersections := getIntersections(history)
+	intersections := getIntersections(wires)
 
 	minKey := intersections[0]
-	minDistance := history[0][minKey] + history[1][minKey]
+	minDistance := wires[0][minKey] + wires[1][minKey]
 	for _, val := range intersections {
-		totalSteps := history[0][val] + history[1][val]
+		totalSteps := wires[0][val] + wires[1][val]
 		if totalSteps < minDistance {
 			minDistance = totalSteps
 			minKey = val
