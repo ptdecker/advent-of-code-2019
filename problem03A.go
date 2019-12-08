@@ -70,8 +70,6 @@ import (
 	"strings"
 )
 
-type orientation int
-
 type route struct {
 	direction string
 	distance  int
@@ -80,12 +78,6 @@ type route struct {
 type point struct {
 	x int
 	y int
-}
-
-type segment struct {
-	start    point
-	end      point
-	vertical bool
 }
 
 // getWireRoutes reads the vector-based routes that define each wire from the comma delimited
@@ -127,144 +119,44 @@ func getWireRoutes(fileName string) ([][]route, error) {
 	return wireRoutes, nil
 }
 
-// Converts sets of vector-based routes to a route defined by a series of points
-func convertRoutesToPaths(wireRoutes [][]route) ([][]point, error) {
-	paths := [][]point{}
-	for _, routes := range wireRoutes {
-		position := point{x: 0, y: 0}
-		path := []point{position}
-		for _, route := range routes {
-			switch route.direction {
-			case "R":
-				position.x += route.distance
-			case "D":
-				position.y -= route.distance
-			case "L":
-				position.x -= route.distance
-			case "U":
-				position.y += route.distance
-			default:
-				return nil, fmt.Errorf("invalid direction of '%s' encountered", route.direction)
-			}
-			path = append(path, position)
-		}
-		paths = append(paths, path)
-	}
-	return paths, nil
-}
-
-// getSegments pulls together line segments from a wire path defined as a set of point.
-// It also determines if that segment is vertically or horizongally oriented.
-func getSegments(wirePaths [][]point) [][]segment {
-	wireSegments := [][]segment{}
-	for _, paths := range wirePaths {
-		segments := []segment{}
-		if len(paths) > 1 {
-			var start point
-			for index, path := range paths {
-				if index > 0 {
-					segments = append(segments, segment{
-						start:    start,
-						end:      path,
-						vertical: (start.x == path.x),
-					})
+func traceWires(wireRoutes [][]route) []map[point]int {
+	history := []map[point]int{}
+	for _, wireRoute := range wireRoutes {
+		location := point{}
+		totalSteps := 0
+		stepsToLocation := map[point]int{}
+		for _, path := range wireRoute {
+			for step := 0; step < path.distance; step++ {
+				switch path.direction {
+				case "R":
+					location.x++
+				case "D":
+					location.y--
+				case "L":
+					location.x--
+				case "U":
+					location.y++
+				default:
+					log.Fatalf("invalid direction of '%s' encountered", path.direction)
 				}
-				start = path
-			}
-			wireSegments = append(wireSegments, segments)
-			segments = nil
-		}
-	}
-	return wireSegments
-}
-
-// findIntersection finds the intersection of two line segments if one exists. The two
-// segments must be tangent to each other, one horizontal, one vertical and the horizontal segment
-// is passed first.
-//
-// TODO: remove nasty redundant code
-//
-func findIntersection(horzSeg, vertSeg segment) (point, bool) {
-
-	if horzSeg.start.y != horzSeg.end.y {
-		log.Fatalf("horizontal segment %v is not horizontal", horzSeg)
-	}
-	horzAxis := horzSeg.start.y
-	yMin := vertSeg.start.y
-	yMax := vertSeg.end.y
-	if yMin > yMax {
-		yMin = vertSeg.end.y
-		yMax = vertSeg.start.y
-	}
-	if yMax < horzAxis || yMin > horzAxis {
-		return point{x: 0, y: 0}, false
-	}
-
-	if vertSeg.start.x != vertSeg.end.x {
-		log.Fatalf("vertical segment %v is not vertical", vertSeg)
-	}
-	vertAxis := vertSeg.start.x
-	xMin := horzSeg.start.x
-	xMax := horzSeg.end.x
-	if xMin > xMax {
-		xMin = horzSeg.end.x
-		xMax = horzSeg.start.x
-	}
-	if xMax < vertAxis || xMin > vertAxis {
-		return point{x: 0, y: 0}, false
-	}
-
-	return point{x: vertAxis, y: horzAxis}, true
-}
-
-//getIntersections returns a set of points that represent all the intersections between two
-//sets of line segments.  It does not return intersections between vertical or horizontal
-//segments, i.e. it only returns intersections if the segments have opposite orientations.
-func getIntersections(set1, set2 []segment) []point {
-	points := []point{}
-	for _, set1seg := range set1 {
-		for _, set2seg := range set2 {
-			if set1seg.vertical == set2seg.vertical { // ignore segments with same orientation
-				continue
-			}
-			var intersection point
-			var ok bool
-			if set1seg.vertical {
-				intersection, ok = findIntersection(set2seg, set1seg)
-			} else {
-				intersection, ok = findIntersection(set1seg, set2seg)
-			}
-			if ok {
-				// fmt.Printf("%v might intersect %v at %v\n", set1seg, set2seg, intersection)
-				points = append(points, intersection)
-			} else {
-				// fmt.Printf("%v does not intersect %v\n", set1seg, set2seg)
+				totalSteps++
+				stepsToLocation[location] = totalSteps
 			}
 		}
+		history = append(history, stepsToLocation)
 	}
-	return points
+	return history
 }
 
-// calcMinManhattanDistance calculates the Manhattan Distances for each point in a set between
-// that point and the origin (0,0).  It returns the minimum distance and the point.  If the
-// origin itself is passed in the set, it is ignored.  If no points are passed at all, then
-// a distance of 0 and a point of (0,0) is returned.
-func calcMinManhattanDistance(points []point) (int, point) {
-	if len(points) == 0 {
-		return 0, point{}
-	}
-	minDistance := math.MaxInt64
-	minPoint := point{}
-	for _, point := range points {
-		if point.x != 0 || point.y != 0 {
-			distance := int(math.Abs(float64(point.x)) + math.Abs(float64(point.y)))
-			if distance < minDistance {
-				minDistance = distance
-				minPoint = point
-			}
+func getIntersections(wires []map[point]int) []point {
+	intersections := []point{}
+	for key := range wires[0] {
+		_, ok := wires[1][key]
+		if ok {
+			intersections = append(intersections, key)
 		}
 	}
-	return minDistance, minPoint
+	return intersections
 }
 
 func problem03A(fileName string) int {
@@ -274,22 +166,17 @@ func problem03A(fileName string) int {
 		log.Fatal(err)
 	}
 
-	wirePaths, err := convertRoutesToPaths(wireRoutes)
-	if err != nil {
-		log.Fatal(err)
+	history := traceWires(wireRoutes)
+
+	intersections := getIntersections(history)
+
+	manhattanDistance := math.MaxInt64
+	for _, val := range intersections {
+		newDistance := int(math.Abs(float64(val.x)) + math.Abs(float64(val.y)))
+		if newDistance < manhattanDistance {
+			manhattanDistance = newDistance
+		}
 	}
 
-	wireSegments := getSegments(wirePaths)
-
-	if len(wireSegments) < 2 {
-		log.Fatalln("less than two wire segments were defiend")
-	}
-	if len(wireSegments) > 2 {
-		log.Fatalln("more then two wires were defined")
-	}
-	intersections := getIntersections(wireSegments[0], wireSegments[1])
-
-	minDistance, _ := calcMinManhattanDistance(intersections)
-
-	return minDistance
+	return manhattanDistance
 }

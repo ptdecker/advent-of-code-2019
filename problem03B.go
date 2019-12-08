@@ -58,39 +58,9 @@ func problem03B(fileName string) int {
 		log.Fatal(err)
 	}
 
-	history := []map[point]int{}
-	for _, wireRoute := range wireRoutes {
-		location := point{}
-		totalSteps := 0
-		stepsToLocation := map[point]int{}
-		for _, path := range wireRoute {
-			for step := 0; step < path.distance; step++ {
-				switch path.direction {
-				case "R":
-					location.x++
-				case "D":
-					location.y--
-				case "L":
-					location.x--
-				case "U":
-					location.y++
-				default:
-					log.Fatalf("invalid direction of '%s' encountered", path.direction)
-				}
-				totalSteps++
-				stepsToLocation[location] = totalSteps
-			}
-		}
-		history = append(history, stepsToLocation)
-	}
+	history := traceWires(wireRoutes)
 
-	intersections := []point{}
-	for key := range history[0] {
-		_, ok := history[1][key]
-		if ok {
-			intersections = append(intersections, key)
-		}
-	}
+	intersections := getIntersections(history)
 
 	minKey := intersections[0]
 	minDistance := history[0][minKey] + history[1][minKey]
