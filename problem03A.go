@@ -1,6 +1,5 @@
 /* Problem 03-A
  *
- *
  * The gravity assist was successful, and you're well on your way to the Venus refuelling station.
  * During the rush back on Earth, the fuel management system wasn't completely installed, so that's
  * next on the priority list.
@@ -56,6 +55,8 @@
  *
  * Answer: 227, point (227, 0)
  */
+
+//TODO: Better approach?  https://www.hackerearth.com/practice/math/geometry/line-intersection-using-bentley-ottmann-algorithm/tutorial/
 
 package main
 
@@ -180,6 +181,9 @@ func getSegments(wirePaths [][]point) [][]segment {
 // findIntersection finds the intersection of two line segments if one exists. The two
 // segments must be tangent to each other, one horizontal, one vertical and the horizontal segment
 // is passed first.
+//
+// TODO: remove nasty redundant code
+//
 func findIntersection(horzSeg, vertSeg segment) (point, bool) {
 
 	if horzSeg.start.y != horzSeg.end.y {
