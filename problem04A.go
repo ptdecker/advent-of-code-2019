@@ -16,6 +16,8 @@
  * 123789 does not meet these criteria (no double).
  *
  * How many different passwords within the range given in your puzzle input meet these criteria?
+ *
+ * Answer: 1625
  */
 
 package main
@@ -67,7 +69,7 @@ func passesRules(guess int) bool {
 func problem04A(start, end int) int {
 
 	count := 0
-	for guess := start; guess < end; guess++ {
+	for guess := start; guess <= end; guess++ {
 		if passesRules(guess) {
 			count++
 		}
