@@ -1,12 +1,18 @@
 package main
 
-import "bytes"
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"os"
+	"strings"
+)
 
 /*
  * Utility functions utilized by all problems
  */
 
-// A helper function that complies with the scanner function needed by scanner.Split
+// scanCommas is a helper function that complies with the scanner function needed by scanner.Split
 func scanCommas(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	if atEOF && len(data) == 0 {
 		return 0, nil, nil
@@ -21,4 +27,13 @@ func scanCommas(data []byte, atEOF bool) (advance int, token []byte, err error) 
 	}
 	// Request more data.
 	return 0, nil, nil
+}
+
+// prompt displays a prompt on the console and then returns the string input
+func prompt(query string) string {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println(query)
+	fmt.Print("> ")
+	text, _ := reader.ReadString('\n')
+	return strings.Replace(text, "\n", "", -1)
 }
