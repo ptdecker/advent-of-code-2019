@@ -30,10 +30,12 @@ func scanCommas(data []byte, atEOF bool) (advance int, token []byte, err error) 
 }
 
 // prompt displays a prompt on the console and then returns the string input
-func prompt(query string) string {
+func prompt(query, promptstr string) string {
 	reader := bufio.NewReader(os.Stdin)
-	fmt.Println(query)
-	fmt.Print("> ")
+	if len(query) > 0 {
+		fmt.Println(query)
+	}
+	fmt.Printf("%s ", promptstr)
 	text, _ := reader.ReadString('\n')
 	return strings.Replace(text, "\n", "", -1)
 }
