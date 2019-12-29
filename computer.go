@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // VM a virtual machine that can load and run Intcode
@@ -114,13 +115,13 @@ func (vm VM) Load(fileName string) (VM, error) {
 }
 
 // add implments the 'add' opcode for the VM
-func (vm VM) add(termAddress1, termAddress2, resultAddress int) {
-	vm.ModeWrite(resultAddress, vm.ModeRead(termAddress1, PositionMode)+vm.ModeRead(termAddress2, PositionMode), PositionMode)
+func (vm VM) add(termAddress1, termAddress2, resultAddress int, mode1, mode2, mode3 ParamMode) {
+	vm.ModeWrite(resultAddress, vm.ModeRead(termAddress1, mode1)+vm.ModeRead(termAddress2, mode2), mode3)
 }
 
 // mul implements the 'mul' opcode for the VM
-func (vm VM) mul(termAddress1, termAddress2, resultAddress int) {
-	vm.ModeWrite(resultAddress, vm.ModeRead(termAddress1, PositionMode)*vm.ModeRead(termAddress2, PositionMode), PositionMode)
+func (vm VM) mul(termAddress1, termAddress2, resultAddress int, mode1, mode2, mode3 ParamMode) {
+	vm.ModeWrite(resultAddress, vm.ModeRead(termAddress1, mode1)*vm.ModeRead(termAddress2, mode2), mode3)
 }
 
 // fmtParam formats a parameter for verbose display depending upon the mode
@@ -137,6 +138,20 @@ func (vm VM) fmtParam(val int, mode ParamMode) string {
 	}
 }
 
+func (vm VM) getMode(directive string, position int) ParamMode {
+	switch directive[position] {
+	case ' ':
+		fallthrough
+	case '0':
+		return PositionMode
+	case '1':
+		return ImmediateMode
+	default:
+		log.Fatalf("Encountered invalid directive '%v'", directive[position])
+	}
+	return ValueMode
+}
+
 // Run attempts to execute the loaded Intcode program in the VM
 func (vm VM) Run(verbose bool) error {
 	if vm.Size() == 0 {
@@ -145,25 +160,34 @@ func (vm VM) Run(verbose bool) error {
 	ip := 0 // instruction pointer
 execLoop:
 	for {
-		opcode := vm.immediateRead(ip)
+
+		directive := fmt.Sprintf("%5d", vm.immediateRead(ip))
+		mode1 := vm.getMode(directive, 0)
+		mode2 := vm.getMode(directive, 1)
+		mode3 := vm.getMode(directive, 2)
+		opcode, err := strconv.Atoi(strings.TrimLeft(directive[3:], " "))
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		switch opcode {
 		case 1: // addition
 			if verbose {
-				p1 := vm.fmtParam(ip+1, PositionMode)
-				p2 := vm.fmtParam(ip+2, PositionMode)
-				p3 := vm.fmtParam(ip+3, PositionMode)
+				p1 := vm.fmtParam(ip+1, mode1)
+				p2 := vm.fmtParam(ip+2, mode2)
+				p3 := vm.fmtParam(ip+3, mode3)
 				fmt.Printf("%4d:\tADD\t%s\t%s\t%s\n", ip, p1, p2, p3)
 			}
-			vm.add(ip+1, ip+2, ip+3)
+			vm.add(ip+1, ip+2, ip+3, mode1, mode2, mode3)
 			ip = ip + 4
 		case 2: // multiplication
 			if verbose {
-				p1 := vm.fmtParam(ip+1, PositionMode)
-				p2 := vm.fmtParam(ip+2, PositionMode)
-				p3 := vm.fmtParam(ip+3, PositionMode)
+				p1 := vm.fmtParam(ip+1, mode1)
+				p2 := vm.fmtParam(ip+2, mode2)
+				p3 := vm.fmtParam(ip+3, mode3)
 				fmt.Printf("%4d:\tMUL\t%s\t%s\t%s\n", ip, p1, p2, p3)
 			}
-			vm.mul(ip+1, ip+2, ip+3)
+			vm.mul(ip+1, ip+2, ip+3, mode1, mode2, mode3)
 			ip = ip + 4
 		case 99: // halt
 			if verbose {
