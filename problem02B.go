@@ -58,7 +58,7 @@ func problem02B(fileName string) int {
 			vm.Write(1, noun)
 			vm.Write(2, verb)
 
-			err = vm.Run()
+			err = vm.Run(false)
 			if err != nil {
 				log.Fatal(err)
 			}

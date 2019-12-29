@@ -83,7 +83,7 @@ consoleloop:
 				fmt.Println("Please load the VM first using 'LOAD <file name>'")
 				break
 			}
-			err := vm.Run()
+			err := vm.Run(false)
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 			}

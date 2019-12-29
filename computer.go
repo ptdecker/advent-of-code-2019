@@ -79,7 +79,7 @@ func (vm VM) mul(termAddress1, termAddress2, resultAddress int) {
 }
 
 // Run attempts to execute the loaded Intcode program in the VM
-func (vm VM) Run() error {
+func (vm VM) Run(verbose bool) error {
 	if vm.Size() == 0 {
 		return fmt.Errorf("no program loaded")
 	}
@@ -89,15 +89,26 @@ execLoop:
 		opcode := vm.Read(ip)
 		switch opcode {
 		case 1: // addition
+			if verbose {
+				fmt.Printf("%4d:\tADD\t%d\t%d\t%d\n", ip, vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+			}
 			vm.add(vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+			ip = ip + 4
 		case 2: // multiplication
+			if verbose {
+				fmt.Printf("%4d:\tMUL\t%d\t%d\t%d\n", ip, vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+			}
 			vm.mul(vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+			ip = ip + 4
 		case 99: // halt
+			if verbose {
+				fmt.Printf("%4d:\tHLT\n", ip)
+			}
+			ip = ip + 1
 			break execLoop
 		default:
 			return fmt.Errorf("Invalid opcode %v encountered at position %v", opcode, ip)
 		}
-		ip = ip + 4
 		if ip > vm.Size() {
 			return fmt.Errorf("no halt instruction occured before end of memory")
 		}
