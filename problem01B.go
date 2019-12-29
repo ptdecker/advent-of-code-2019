@@ -42,7 +42,7 @@ import (
 	"strconv"
 )
 
-func problem01B(fileName string) int64 {
+func problem01B(fileName string) int {
 
 	// Open data file containing the masses of each module
 	file, err := os.Open(fileName)
@@ -80,5 +80,5 @@ func problem01B(fileName string) int64 {
 
 	}
 
-	return totalFuel
+	return int(totalFuel)
 }

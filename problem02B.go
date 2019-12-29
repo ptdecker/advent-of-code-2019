@@ -45,7 +45,7 @@ import (
 	"log"
 )
 
-func problem02B(fileName string) int {
+func problem02B(fileName string, target int) int {
 
 	for noun := 0; noun < 100; noun++ {
 		for verb := 0; verb < 100; verb++ {
@@ -55,15 +55,15 @@ func problem02B(fileName string) int {
 				log.Fatal(err)
 			}
 
-			vm.Write(1, noun)
-			vm.Write(2, verb)
+			vm.ModeWrite(1, noun, ImmediateMode)
+			vm.ModeWrite(2, verb, ImmediateMode)
 
 			err = vm.Run(false)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			if vm.Read(0) == 19690720 {
+			if vm.ModeRead(0, ImmediateMode) == target {
 				return (100*noun + verb)
 			}
 		}

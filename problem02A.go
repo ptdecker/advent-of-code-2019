@@ -81,13 +81,13 @@ func problem02A(fileName string) int {
 		log.Fatal(err)
 	}
 
-	vm.Write(1, 12)
-	vm.Write(2, 2)
+	vm.ModeWrite(1, 12, ImmediateMode)
+	vm.ModeWrite(2, 2, ImmediateMode)
 
-	err = vm.Run(true)
+	err = vm.Run(false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return vm.Read(0)
+	return vm.ModeRead(0, ImmediateMode)
 }

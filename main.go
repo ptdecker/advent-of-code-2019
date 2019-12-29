@@ -10,15 +10,23 @@ import (
 	"strings"
 )
 
+func tryProblem(name string, expected int, actual int) {
+	if expected == actual {
+		fmt.Printf("Problem %s answer: %v (pass)\n", name, actual)
+	} else {
+		fmt.Printf("%s answer: %v (fail, expected: %v)\n", name, actual, expected)
+	}
+}
+
 func runProblems() {
-	fmt.Printf("Problem 01-A answer: %v\n", problem01A("./data/day01.txt"))
-	fmt.Printf("Problem 01-B answer: %v\n", problem01B("./data/day01.txt"))
-	fmt.Printf("Problem 02-A answer: %v\n", problem02A("./data/day02.txt"))
-	fmt.Printf("Problem 02-B answer: %v\n", problem02B("./data/day02.txt"))
-	fmt.Printf("Problem 03-A answer: %v\n", problem03A("./data/day03.txt"))
-	fmt.Printf("Problem 03-B answer: %v\n", problem03B("./data/day03.txt"))
-	fmt.Printf("Problem 04-A answer: %v\n", problem04A(171309, 643603))
-	fmt.Printf("Problem 04-B answer: %v\n", problem04B(171309, 643603))
+	tryProblem("01-A", problem01A("./data/day01.txt"), 3297866)
+	tryProblem("01-B", problem01B("./data/day01.txt"), 4943923)
+	tryProblem("02-A", problem02A("./data/day02.txt"), 4690667)
+	tryProblem("02-B", problem02B("./data/day02.txt", 19690720), 6255)
+	tryProblem("03-A", problem03A("./data/day03.txt"), 227)
+	tryProblem("03-B", problem03B("./data/day03.txt"), 20286)
+	tryProblem("04-A", problem04A(171309, 643603), 1625)
+	tryProblem("04-B", problem04B(171309, 643603), 1111)
 }
 
 func loadConsole() {
@@ -61,7 +69,7 @@ consoleloop:
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 			}
-			vm.Write(addr, val)
+			vm.ModeWrite(addr, val, ImmediateMode)
 			fmt.Printf("%d written to %d\n", val, addr)
 		case "RE":
 			if len(tokens) < 2 {
@@ -76,7 +84,7 @@ consoleloop:
 			if err != nil {
 				fmt.Printf("Error: %v\n", err)
 			}
-			val := vm.Read(addr)
+			val := vm.ModeRead(addr, ImmediateMode)
 			fmt.Printf("%d contains %d\n", addr, val)
 		case "RU":
 			if vm == nil {

@@ -41,7 +41,7 @@ func fuelRequired(mass int64) int64 {
 	return fuel
 }
 
-func problem01A(fileName string) int64 {
+func problem01A(fileName string) int {
 
 	// Open data file containing the masses of each module
 	file, err := os.Open(fileName)
@@ -67,5 +67,5 @@ func problem01A(fileName string) int64 {
 		// total fule required for the flight
 		totalFuel += fuelRequired(int64(mass))
 	}
-	return totalFuel
+	return int(totalFuel)
 }

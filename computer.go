@@ -15,13 +15,26 @@ import (
 // VM a virtual machine that can load and run Intcode
 type VM []int // VM's memory
 
+// ParamMode is an enum that defines opcode parameter mode
+type ParamMode int
+
+const (
+	// PositionMode 'position' parameter mode
+	PositionMode ParamMode = 0
+	// ImmediateMode 'immediate' parameter mode
+	ImmediateMode ParamMode = 1
+	// ValueMode 'value' mode
+	ValueMode ParamMode = 9
+)
+
 // Size returns the current size of the memory in the VM
 func (vm VM) Size() int {
 	return len(vm)
 }
 
-// Write attempts to write a value to the VM's memory
-func (vm VM) Write(address, val int) {
+// immediateWrite attempts to write a value to the VM's memory using the 'immediate' mode
+// where the passed address is the address of the desired data
+func (vm VM) immediateWrite(address, val int) {
 	if address < 0 {
 		log.Fatalf("attempt to write to a negative address of %d", address)
 	}
@@ -31,8 +44,25 @@ func (vm VM) Write(address, val int) {
 	vm[address] = val
 }
 
-// Read attempts to retreive a value from VM's memory
-func (vm VM) Read(address int) int {
+// positionWrite attempts to write a value to the VM's memory using the 'position' mode
+// where the location pointed to by the passed address contains the address of the desired
+// data
+func (vm VM) positionWrite(address, val int) {
+	vm.immediateWrite(vm[address], val)
+}
+
+// ModeWrite writes to memory using the mode passed
+func (vm VM) ModeWrite(address, val int, mode ParamMode) {
+	if mode == ImmediateMode {
+		vm.immediateWrite(address, val)
+	} else {
+		vm.positionWrite(address, val)
+	}
+}
+
+// immediateRead attempts to retreive a value from VM's memory using the 'immediate' mode
+// where the passed address is the address of the desired data
+func (vm VM) immediateRead(address int) int {
 	if address < 0 {
 		log.Fatalf("attempt to read to a negative address of %d", address)
 	}
@@ -40,6 +70,21 @@ func (vm VM) Read(address int) int {
 		log.Fatalf("attempt to read from address %d but memory stops at %d", address, vm.Size())
 	}
 	return vm[address]
+}
+
+// positionRead attempts to retreive a value from VM's memory using the 'position' mode
+// where the location pointed to by the passed address contains the address of the desired
+// data.
+func (vm VM) positionRead(address int) int {
+	return vm.immediateRead(vm[address])
+}
+
+// ModeRead reads from memory using the mode passed
+func (vm VM) ModeRead(address int, mode ParamMode) int {
+	if mode == ImmediateMode {
+		return vm.immediateRead(address)
+	}
+	return vm.positionRead(address)
 }
 
 // Load attempts to load VM's memory with Intcode from a file
@@ -70,12 +115,26 @@ func (vm VM) Load(fileName string) (VM, error) {
 
 // add implments the 'add' opcode for the VM
 func (vm VM) add(termAddress1, termAddress2, resultAddress int) {
-	vm.Write(resultAddress, vm.Read(termAddress1)+vm.Read(termAddress2))
+	vm.ModeWrite(resultAddress, vm.ModeRead(termAddress1, PositionMode)+vm.ModeRead(termAddress2, PositionMode), PositionMode)
 }
 
 // mul implements the 'mul' opcode for the VM
 func (vm VM) mul(termAddress1, termAddress2, resultAddress int) {
-	vm.Write(resultAddress, vm.Read(termAddress1)*vm.Read(termAddress2))
+	vm.ModeWrite(resultAddress, vm.ModeRead(termAddress1, PositionMode)*vm.ModeRead(termAddress2, PositionMode), PositionMode)
+}
+
+// fmtParam formats a parameter for verbose display depending upon the mode
+func (vm VM) fmtParam(val int, mode ParamMode) string {
+	switch mode {
+	case ImmediateMode:
+		return fmt.Sprintf("$%4d  (%d)", val, vm.ModeRead(val, mode))
+	case PositionMode:
+		return fmt.Sprintf("[%4d] (%d)", val, vm.ModeRead(val, mode))
+	case ValueMode:
+		return fmt.Sprintf(" %4d  (%d)", val, vm.ModeRead(val, mode))
+	default:
+		return "Err"
+	}
 }
 
 // Run attempts to execute the loaded Intcode program in the VM
@@ -86,19 +145,25 @@ func (vm VM) Run(verbose bool) error {
 	ip := 0 // instruction pointer
 execLoop:
 	for {
-		opcode := vm.Read(ip)
+		opcode := vm.immediateRead(ip)
 		switch opcode {
 		case 1: // addition
 			if verbose {
-				fmt.Printf("%4d:\tADD\t%d\t%d\t%d\n", ip, vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+				p1 := vm.fmtParam(ip+1, PositionMode)
+				p2 := vm.fmtParam(ip+2, PositionMode)
+				p3 := vm.fmtParam(ip+3, PositionMode)
+				fmt.Printf("%4d:\tADD\t%s\t%s\t%s\n", ip, p1, p2, p3)
 			}
-			vm.add(vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+			vm.add(ip+1, ip+2, ip+3)
 			ip = ip + 4
 		case 2: // multiplication
 			if verbose {
-				fmt.Printf("%4d:\tMUL\t%d\t%d\t%d\n", ip, vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+				p1 := vm.fmtParam(ip+1, PositionMode)
+				p2 := vm.fmtParam(ip+2, PositionMode)
+				p3 := vm.fmtParam(ip+3, PositionMode)
+				fmt.Printf("%4d:\tMUL\t%s\t%s\t%s\n", ip, p1, p2, p3)
 			}
-			vm.mul(vm.Read(ip+1), vm.Read(ip+2), vm.Read(ip+3))
+			vm.mul(ip+1, ip+2, ip+3)
 			ip = ip + 4
 		case 99: // halt
 			if verbose {
